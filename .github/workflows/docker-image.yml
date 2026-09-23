@@ -1,7 +1,7 @@
 name: Build and Push OpenJ9 Image
 
 on:
-  workflow_dispatch: # 支持网页端手动点击运行
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Docker 镜像标签强制要求全小写，此步骤防止用户名带大写导致构建崩溃
+      # 使用 GitHub CLI 自动检索并下载该 Release 下所有的 jar 文件，无视具体文件名
+      - name: Download Release Jar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download v3.2.32 --repo wushuo894/ani-rss --pattern "*.jar" --clobber
+          # 重命名为固定的 app.jar 供 Dockerfile 读取
+          mv *.jar app.jar
+          ls -lh app.jar
+
       - name: Resolve lowercase image name
         run: |
           echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
@@ -29,8 +38,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 升级至 v6 适配 GitHub Actions 最新 Node 运行环境
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
