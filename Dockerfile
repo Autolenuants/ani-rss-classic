@@ -17,4 +17,5 @@ COPY app.jar /app/app.jar
 
 EXPOSE 8088
 
-ENTRYPOINT ["java", "-Xquickstart", "-Duser.timezone=Asia/Shanghai", "-Dfile.encoding=UTF-8", "-jar", "/app/app.jar"]
+# 增加全局网络超时系统参数以缓解 RSS 抓取 SocketTimeoutException 的问题
+ENTRYPOINT ["java", "-Xquickstart", "-Duser.timezone=Asia/Shanghai", "-Dfile.encoding=UTF-8", "-Dsun.net.client.defaultConnectTimeout=60000", "-Dsun.net.client.defaultReadTimeout=60000", "-jar", "/app/app.jar"]
